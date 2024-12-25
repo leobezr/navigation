@@ -1,0 +1,5 @@
+{
+  "editor.formatOnSave": true,
+  "cSpell.words": ["Asyncio", "Respawn", "Respawns", "VITE"],
+  "rust-analyzer.checkOnSave": false
+}
