@@ -1,5 +1,5 @@
 import { Navigation } from "./navigation";
-import { standardMap, numericMap } from "./__mocks__/maps";
+import { standardMap, numericMap, trafficMap } from "./__mocks__/maps";
 import { TileType } from "../config/tiles/type";
 import { Dictionary, Position } from "../services/type";
 import { Tiles } from "../config/tiles/tiles";
@@ -288,6 +288,22 @@ describe("Testing navigation system", () => {
     });
   });
 
+  describe("Break is unreachable tile", () => {
+    const navigation = new Navigation({
+      initialPosition: {
+        x: 1,
+        y: 1,
+      },
+      map: trafficMap,
+      cameraSizeDimension: 5,
+      allowTraffic: false,
+    });
+
+    it("Should break when finds traffic", () => {
+      expect(() => navigation.goTo({ x: 2, y: 1 })).toThrow();
+    });
+  });
+
   describe("Testing big map", () => {
     const navigation = new Navigation({
       initialPosition: {
@@ -315,7 +331,7 @@ describe("Testing navigation system", () => {
 
     it("Testing camera growth {WEST}", () => {
       navigation.changePosition({ x: 0, y: 0 });
-      navigation.goTo({ x: 70, y: 19 }, true);
+      navigation.goTo({ x: 70, y: 19 });
 
       expect(navigation.position).toStrictEqual({ x: 70, y: 19 });
     });

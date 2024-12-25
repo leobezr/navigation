@@ -4,6 +4,7 @@ import { Direction } from "../movement/type";
 import { AStar } from "../services/a-star";
 import { Dictionary, Position } from "../services/type";
 import { randomUUID } from "crypto";
+import { manhattanGeometry } from "../services/manhattan-geometry";
 
 import {
   NavigationProps,
@@ -33,59 +34,12 @@ export class Navigation extends Movement {
     return this.__transcodeTiles(tiles, goal, camera.xMin, camera.yMin);
   }
 
-  public goTo(goal: Position, log?: boolean) {
+  public goTo(goal: Position) {
     const sessionId = randomUUID();
-    const timestamp = Date.now();
 
     while (this.position.x !== goal.x || this.position.y !== goal.y) {
-      if (Date.now() - timestamp >= 1000 * 3) {
-        console.error("Couldn't define route");
-        break;
-      }
-
-      const path = this.getPath(goal); // Recalculate the path at every step
-
-      if (!path || path.length < 2) {
-        console.error(
-          `Path not found or too short at position:`,
-          this.position
-        );
-        break; // Prevent infinite loops
-      }
-
-      const from = path[0]; // Current position
-      const to = path[1]; // Next step
-      const direction = this.__getDirection(from, to);
-
-      if (direction) {
-        const oldPos = { ...this.position };
-
-        this.__storeLog(sessionId, direction);
-        this.move(direction);
-
-        if (log) {
-          console.log(
-            `Move (${direction}): (${oldPos.x},${oldPos.y}) -> (${this.position.x},${this.position.y})`
-          );
-        }
-
-        if (!this.__setup.allowTraffic) {
-          if (oldPos.x === this.position.x && oldPos.y === this.position.y) {
-            if (this.__hasTraffic(sessionId)) {
-              console.error(
-                "Couldn't move to expected position",
-                this.position
-              );
-              break;
-            }
-          } else {
-            this.__clearTraffic(sessionId);
-          }
-        }
-      } else {
-        console.error(`Unable to determine direction from:`, from, `to:`, to);
-        break;
-      }
+      const path = this.getPath(goal);
+      this.__moveInPathDirection(path, sessionId);
     }
 
     return sessionId;
@@ -186,14 +140,21 @@ export class Navigation extends Movement {
   private __log: Dictionary<string> = {};
   private __trafficLog: Dictionary<number> = {};
 
-  private __hasTraffic(sessionId: string) {
+  private __hasTraffic(sessionId: string, oldPos: Position, pos: Position) {
     const trafficThreshold = 3;
+    const warnOnTraffic = !this.__setup.allowTraffic;
 
-    if (sessionId in this.__trafficLog) {
-      const traffic = this.__logTraffic(sessionId);
-      return traffic >= trafficThreshold;
-    } else {
-      this.__logTraffic(sessionId);
+    if (warnOnTraffic) {
+      if (oldPos.x === pos.x && oldPos.y === pos.y) {
+        if (sessionId in this.__trafficLog) {
+          const traffic = this.__logTraffic(sessionId);
+          return traffic >= trafficThreshold;
+        } else {
+          this.__logTraffic(sessionId);
+        }
+      } else {
+        this.__clearTraffic(sessionId);
+      }
     }
   }
 
@@ -257,17 +218,13 @@ export class Navigation extends Movement {
   private __getDirection(from: Position, to: Position): Direction | null {
     const dx = to.x - from.x;
     const dy = to.y - from.y;
+    const direction = manhattanGeometry(dx, dy);
 
-    if (dx === 0 && dy < 0) return Direction.NORTH;
-    if (dx > 0 && dy === 0) return Direction.EAST;
-    if (dx === 0 && dy > 0) return Direction.SOUTH;
-    if (dx < 0 && dy === 0) return Direction.WEST;
-    if (dx > 0 && dy < 0) return Direction.NORTH_EAST;
-    if (dx > 0 && dy > 0) return Direction.SOUTH_EAST;
-    if (dx < 0 && dy > 0) return Direction.SOUTH_WEST;
-    if (dx < 0 && dy < 0) return Direction.NORTH_WEST;
-
-    return null;
+    if (direction) {
+      return direction;
+    } else {
+      return null;
+    }
   }
 
   private __getCameraBounds(dir: Position, goal: Position) {
@@ -306,6 +263,29 @@ export class Navigation extends Movement {
       yMin,
       yMax: yMax + 1, // Adjust to make bounds inclusive
     };
+  }
+
+  private __moveInPathDirection(path: Position[], sessionId: string) {
+    if (!path || path.length < 2) {
+      throw Error(`Path not found or too short at position:`);
+    }
+
+    const currentPosition = path[0];
+    const nextStep = path[1];
+    const direction = this.__getDirection(currentPosition, nextStep);
+
+    if (direction) {
+      const oldPos = { ...this.position };
+
+      this.__storeLog(sessionId, direction);
+      this.move(direction);
+
+      if (this.__hasTraffic(sessionId, oldPos, this.position)) {
+        throw Error("Couldn't move to expected position");
+      }
+    } else {
+      throw Error("Unable to determine direction");
+    }
   }
 
   private __storeLog(sessionId: string, direction: string) {
