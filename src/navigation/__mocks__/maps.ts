@@ -32,3 +32,9 @@ export const standardMap = [
   [WATER, WATER, WATER, GRASS, WATER, WATER, WATER, WATER],
   [WATER, WATER, WATER, WATER, WATER, WATER, WATER, WATER],
 ];
+
+export const trafficMap = [
+  [WATER, WATER, WATER],
+  [WATER, GRASS, WATER],
+  [WATER, WATER, WATER],
+];
