@@ -1,3 +1,4 @@
+import { TranscodedTile } from "../navigation/type";
 import { AStar } from "./a-star";
 
 describe("Testing A* functions", () => {
@@ -36,6 +37,58 @@ describe("Testing A* functions", () => {
       expect(AStar.fCost(1, 1)).toEqual(2);
       expect(AStar.fCost(5, 1.5)).toEqual(6.5);
       expect(AStar.fCost(3.33, 2.35)).toEqual(5.68);
+    });
+  });
+
+  describe("Testing sort fCost", () => {
+    it("Should sort items using fCost", () => {
+      const tiles = [
+        {
+          fCost: 3,
+        },
+        {
+          fCost: 15,
+        },
+        {
+          fCost: 1,
+        },
+        {
+          fCost: 7,
+        },
+      ] as TranscodedTile[];
+
+      AStar.sortFCost(tiles);
+
+      expect(tiles.map((t) => t.fCost)).toEqual(
+        expect.arrayContaining([1, 3, 7, 15])
+      );
+    });
+
+    it("Uses hCost when fCost is redundant", () => {
+      const tiles = [
+        {
+          fCost: 2,
+          hCost: 3,
+        },
+        {
+          fCost: 5,
+          hCost: 8,
+        },
+        {
+          fCost: 2,
+          hCost: 3.1,
+        },
+        {
+          fCost: 2,
+          hCost: 3.3,
+        },
+      ] as TranscodedTile[];
+
+      AStar.sortFCost(tiles);
+
+      expect(tiles.map((t) => t.hCost)).toEqual(
+        expect.arrayContaining([3, 3.1, 3.3, 8])
+      );
     });
   });
 });

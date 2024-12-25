@@ -1,3 +1,4 @@
+import { TranscodedTile } from "../navigation/type";
 import { Position } from "./type";
 
 export class AStar {
@@ -22,5 +23,14 @@ export class AStar {
 
   public static fCost(gCost: number, hCost: number) {
     return gCost + hCost;
+  }
+
+  public static sortFCost(tile: TranscodedTile[]) {
+    return tile.sort((a, b) => {
+      if (a.fCost === b.fCost) {
+        return a.hCost - b.hCost;
+      }
+      return a.fCost - b.fCost;
+    });
   }
 }
