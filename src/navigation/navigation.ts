@@ -57,8 +57,6 @@ export class Navigation extends Movement {
       const to = path[1]; // Next step
       const direction = this.__getDirection(from, to);
 
-      console.log(`Using direction (${direction})`);
-
       if (direction) {
         const oldPos = { ...this.position };
 
@@ -274,35 +272,39 @@ export class Navigation extends Movement {
 
   private __getCameraBounds(dir: Position, goal: Position) {
     const cameraSize = this.__setup.cameraSizeDimension;
-    const camera = Math.floor(cameraSize / 2);
+    const cameraRadius = Math.floor(cameraSize / 2);
     const { x, y } = this.position;
 
-    const xShift = Math.round(dir.x * camera);
-    const yShift = Math.round(dir.y * camera);
+    // Directional shifts
+    const xShift = Math.round(dir.x * cameraRadius);
+    const yShift = Math.round(dir.y * cameraRadius);
 
-    const xMin = Math.max(0, Math.min(x + xShift - camera, goal.x));
-    const xMax = Math.min(
-      this.map[0].length,
-      Math.max(x + xShift + camera, goal.x)
-    );
+    // Preliminary camera bounds based on direction
+    let xMin = Math.max(0, x + xShift - cameraRadius);
+    let xMax = Math.min(this.map[0].length - 1, x + xShift + cameraRadius);
 
-    const yMin = Math.max(0, Math.min(y + yShift - camera, goal.y));
-    const yMax = Math.min(
-      this.map.length,
-      Math.max(y + yShift + camera, goal.y)
-    );
+    let yMin = Math.max(0, y + yShift - cameraRadius);
+    let yMax = Math.min(this.map.length - 1, y + yShift + cameraRadius);
 
-    const adjustedXMin = Math.min(x, xMin);
-    const adjustedXMax = Math.max(x + 1, xMax);
+    // Ensure the goal is included within bounds
+    xMin = Math.min(xMin, goal.x);
+    xMax = Math.max(xMax, goal.x);
 
-    const adjustedYMin = Math.min(y, yMin);
-    const adjustedYMax = Math.max(y + 1, yMax);
+    yMin = Math.min(yMin, goal.y);
+    yMax = Math.max(yMax, goal.y);
+
+    // Ensure current position is also included
+    xMin = Math.min(xMin, x);
+    xMax = Math.max(xMax, x);
+
+    yMin = Math.min(yMin, y);
+    yMax = Math.max(yMax, y);
 
     return {
-      xMin: adjustedXMin,
-      xMax: adjustedXMax,
-      yMin: adjustedYMin,
-      yMax: adjustedYMax,
+      xMin,
+      xMax: xMax + 1, // Adjust to make bounds inclusive
+      yMin,
+      yMax: yMax + 1, // Adjust to make bounds inclusive
     };
   }
 

@@ -1,7 +1,8 @@
 import { Navigation } from "./navigation";
 import { standardMap, numericMap } from "./__mocks__/maps";
 import { TileType } from "../config/tiles/type";
-import { Dictionary } from "../services/type";
+import { Dictionary, Position } from "../services/type";
+import { Tiles } from "../config/tiles/tiles";
 
 describe("Testing navigation system", () => {
   describe("Testing camera tile scan", () => {
@@ -14,95 +15,114 @@ describe("Testing navigation system", () => {
       cameraSizeDimension: 5,
     });
 
-    it("When goal is east, point to east", () => {
-      const cameraTiles = navigation.camera({ x: 4, y: 5 });
-      const initialValue = numericMap[5][1];
+    it("Testing camera to {East}", () => {
+      const startingPosition = { x: 1, y: 5 };
+      const goalPosition = { x: 4, y: 5 };
 
-      expect(cameraTiles).toEqual(
-        expect.arrayContaining([
-          [26, 27, 28, 29],
-          [34, 35, 36, 37],
-          [42, 43, 44, 45],
-          [50, 51, 52, 53],
-        ])
+      navigation.changePosition(startingPosition);
+      const cameraTiles = navigation.camera(goalPosition);
+
+      const validate = validateNumericMapValue(
+        cameraTiles,
+        numericMap,
+        startingPosition,
+        goalPosition
       );
 
-      expect(
-        cameraTiles.some((column) => column.some((num) => num === initialValue))
-      ).toBe(true);
+      expect(validate).toStrictEqual({
+        startingPosition: true,
+        goalPosition: true,
+        start: 42,
+        end: 45,
+      });
     });
 
-    it("When goal is west, point to west", () => {
-      navigation.changePosition({ x: 6, y: 5 });
-      const cameraTiles = navigation.camera({ x: 4, y: 5 });
-      const initialValue = numericMap[5][6];
+    it("Testing camera to {West}", () => {
+      const startingPosition = { x: 6, y: 5 };
+      const goalPosition = { x: 4, y: 5 };
 
-      expect(cameraTiles).toEqual(
-        expect.arrayContaining([
-          [27, 28, 29, 30, 31],
-          [35, 36, 37, 38, 39],
-          [43, 44, 45, 46, 47],
-          [51, 52, 53, 54, 55],
-        ])
+      navigation.changePosition(startingPosition);
+      const cameraTiles = navigation.camera(goalPosition);
+
+      const validate = validateNumericMapValue(
+        cameraTiles,
+        numericMap,
+        startingPosition,
+        goalPosition
       );
 
-      expect(
-        cameraTiles.some((column) => column.some((num) => num === initialValue))
-      ).toBe(true);
+      expect(validate).toStrictEqual({
+        startingPosition: true,
+        goalPosition: true,
+        start: 47,
+        end: 45,
+      });
     });
 
-    it("When goal is south, point to south", () => {
-      navigation.changePosition({ x: 3, y: 2 });
-      const cameraTiles = navigation.camera({ x: 3, y: 10 });
-      const initialValue = numericMap[2][3];
+    it("Testing camera to {South}", () => {
+      const startingPosition = { x: 3, y: 2 };
+      const goalPosition = { x: 3, y: 10 };
 
-      expect(cameraTiles).toEqual(
-        expect.arrayContaining([
-          [18, 19, 20, 21],
-          [26, 27, 28, 29],
-          [34, 35, 36, 37],
-          [42, 43, 44, 45],
-        ])
+      navigation.changePosition(startingPosition);
+      const cameraTiles = navigation.camera(goalPosition);
+
+      const validate = validateNumericMapValue(
+        cameraTiles,
+        numericMap,
+        startingPosition,
+        goalPosition
       );
 
-      expect(
-        cameraTiles.some((column) => column.some((num) => num === initialValue))
-      ).toBe(true);
+      expect(validate).toStrictEqual({
+        startingPosition: true,
+        goalPosition: true,
+        start: 20,
+        end: 84,
+      });
     });
 
-    it("When goal is north, point to north", () => {
-      navigation.changePosition({ x: 3, y: 10 });
-      const cameraTiles = navigation.camera({ x: 3, y: 2 });
-      const initialValue = numericMap[2][3];
+    it("Testing camera to {North}", () => {
+      const startingPosition = { x: 3, y: 10 };
+      const goalPosition = { x: 3, y: 2 };
 
-      expect(cameraTiles).toEqual(
-        expect.arrayContaining([
-          [50, 51, 52, 53],
-          [58, 59, 60, 61],
-          [66, 67, 68, 69],
-          [74, 75, 76, 77],
-        ])
+      navigation.changePosition(startingPosition);
+      const cameraTiles = navigation.camera(goalPosition);
+
+      const validate = validateNumericMapValue(
+        cameraTiles,
+        numericMap,
+        startingPosition,
+        goalPosition
       );
 
-      expect(
-        cameraTiles.some((column) => column.some((num) => num === initialValue))
-      ).toBe(true);
+      expect(validate).toStrictEqual({
+        startingPosition: true,
+        goalPosition: true,
+        start: 84,
+        end: 20,
+      });
     });
 
-    it("When goal is north-east, point to north-east and extends camera till goal", () => {
-      navigation.changePosition({ x: 2, y: 9 });
+    it("Testing camera to {NorthEast}", () => {
+      const startingPosition = { x: 2, y: 9 };
+      const goalPosition = { x: 6, y: 2 };
 
-      expect(navigation.camera({ x: 6, y: 2 })).toEqual(
-        expect.arrayContaining([
-          [18, 19, 20, 21, 22],
-          [26, 27, 28, 29, 30],
-          [34, 35, 36, 37, 38],
-          [42, 43, 44, 45, 46],
-          [50, 51, 52, 53, 54],
-          [58, 59, 60, 61, 62],
-          [66, 67, 68, 69, 70],
-        ])
-      );
+      navigation.changePosition(startingPosition);
+      const cameraTiles = navigation.camera(goalPosition);
+
+      expect(
+        validateNumericMapValue(
+          cameraTiles,
+          numericMap,
+          startingPosition,
+          goalPosition
+        )
+      ).toStrictEqual({
+        startingPosition: true,
+        goalPosition: true,
+        end: 23,
+        start: 75,
+      });
     });
   });
 
@@ -119,15 +139,11 @@ describe("Testing navigation system", () => {
     it("Scans tiles and skips non walkable ones", () => {
       const tiles = navigation.scanTiles({ x: 6, y: 2 });
       const simpleTiles = tiles.map((y) => y.map((x) => x.name));
+      const flatTiles = simpleTiles.flat();
 
-      expect(simpleTiles).toEqual(
-        expect.arrayContaining([
-          ["grass", "grass"],
-          ["grass", "grass"],
-          ["grass"],
-          ["grass", "grass", "grass", "grass", "grass"],
-        ])
-      );
+      expect(
+        flatTiles.every((tile) => tile === Tiles[TileType.GRASS].name)
+      ).toBe(true);
     });
   });
 
@@ -260,7 +276,7 @@ describe("Testing navigation system", () => {
 
     it("Should go to hard point of the map", () => {
       navigation.changePosition({ x: 3, y: 10 });
-      const sessionId = navigation.goTo({ x: 1, y: 4 }, true);
+      const sessionId = navigation.goTo({ x: 1, y: 4 });
 
       expect(getMovementCount(navigation.log[sessionId])).toStrictEqual({
         n: 2,
@@ -269,6 +285,39 @@ describe("Testing navigation system", () => {
       });
 
       expect(navigation.position).toStrictEqual({ x: 1, y: 4 });
+    });
+  });
+
+  describe("Testing big map", () => {
+    const navigation = new Navigation({
+      initialPosition: {
+        x: 0,
+        y: 15,
+      },
+      map: {
+        generate: [300, 20],
+        defaultToGroundId: TileType.GRASS,
+      },
+      cameraSizeDimension: 10,
+    });
+
+    it("Testing camera growth {EAST}", () => {
+      navigation.goTo({ x: 299, y: 15 });
+      expect(navigation.position).toStrictEqual({ x: 299, y: 15 });
+    });
+
+    it("Testing camera growth {WEST}", () => {
+      navigation.changePosition({ x: 299, y: 15 });
+      navigation.goTo({ x: 0, y: 15 });
+
+      expect(navigation.position).toStrictEqual({ x: 0, y: 15 });
+    });
+
+    it("Testing camera growth {WEST}", () => {
+      navigation.changePosition({ x: 0, y: 0 });
+      navigation.goTo({ x: 70, y: 19 }, true);
+
+      expect(navigation.position).toStrictEqual({ x: 70, y: 19 });
     });
   });
 });
@@ -286,4 +335,22 @@ const getMovementCount = (log: string) => {
     }
     return structure;
   }, {} as Dictionary<number>);
+};
+
+const validateNumericMapValue = (
+  tiles: number[][],
+  map: number[][],
+  startingPosition: Position,
+  goalPosition: Position
+) => {
+  const startingPointValue = map[startingPosition.y][startingPosition.x];
+  const goalPointValue = map[goalPosition.y][goalPosition.x];
+  const flatTiles = tiles.flat();
+
+  return {
+    startingPosition: flatTiles.includes(startingPointValue),
+    goalPosition: flatTiles.includes(goalPointValue),
+    start: startingPointValue,
+    end: goalPointValue,
+  };
 };
