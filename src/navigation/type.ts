@@ -8,6 +8,7 @@ export interface NavigationConfiguration {
   maxStepsPerSession?: number;
   diagonalMultiplier?: number;
   cameraSizeDimension?: number;
+  allowTraffic?: boolean;
 }
 
 export interface TranscodedTile extends Tile {
