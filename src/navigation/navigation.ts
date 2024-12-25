@@ -33,18 +33,60 @@ export class Navigation extends Movement {
     return this.__transcodeTiles(tiles, goal, camera.xMin, camera.yMin);
   }
 
-  public goTo(goal: Position) {
-    const path = this.getPath(goal);
+  public goTo(goal: Position, log?: boolean) {
     const sessionId = randomUUID();
+    const timestamp = Date.now();
 
-    for (let i = 0; i < path.length - 1; i++) {
-      const from = path[i];
-      const to = path[i + 1];
+    while (this.position.x !== goal.x || this.position.y !== goal.y) {
+      if (Date.now() - timestamp >= 1000 * 3) {
+        console.error("Couldn't define route");
+        break;
+      }
+
+      const path = this.getPath(goal); // Recalculate the path at every step
+
+      if (!path || path.length < 2) {
+        console.error(
+          `Path not found or too short at position:`,
+          this.position
+        );
+        break; // Prevent infinite loops
+      }
+
+      const from = path[0]; // Current position
+      const to = path[1]; // Next step
       const direction = this.__getDirection(from, to);
 
+      console.log(`Using direction (${direction})`);
+
       if (direction) {
+        const oldPos = { ...this.position };
+
         this.__storeLog(sessionId, direction);
         this.move(direction);
+
+        if (log) {
+          console.log(
+            `Move (${direction}): (${oldPos.x},${oldPos.y}) -> (${this.position.x},${this.position.y})`
+          );
+        }
+
+        if (!this.__setup.allowTraffic) {
+          if (oldPos.x === this.position.x && oldPos.y === this.position.y) {
+            if (this.__hasTraffic(sessionId)) {
+              console.error(
+                "Couldn't move to expected position",
+                this.position
+              );
+              break;
+            }
+          } else {
+            this.__clearTraffic(sessionId);
+          }
+        }
+      } else {
+        console.error(`Unable to determine direction from:`, from, `to:`, to);
+        break;
       }
     }
 
@@ -140,9 +182,38 @@ export class Navigation extends Movement {
     diagonalMultiplier: 1.4,
     maxStepsPerSession: 100,
     cameraSizeDimension: 10,
+    allowTraffic: true,
   };
 
   private __log: Dictionary<string> = {};
+  private __trafficLog: Dictionary<number> = {};
+
+  private __hasTraffic(sessionId: string) {
+    const trafficThreshold = 3;
+
+    if (sessionId in this.__trafficLog) {
+      const traffic = this.__logTraffic(sessionId);
+      return traffic >= trafficThreshold;
+    } else {
+      this.__logTraffic(sessionId);
+    }
+  }
+
+  private __logTraffic(sessionId: string) {
+    if (sessionId in this.__trafficLog) {
+      this.__trafficLog[sessionId]++;
+    } else {
+      this.__trafficLog[sessionId] = 1;
+    }
+
+    return this.__trafficLog[sessionId];
+  }
+
+  private __clearTraffic(sessionId: string) {
+    if (sessionId in this.__trafficLog) {
+      this.__trafficLog[sessionId] = 0;
+    }
+  }
 
   private __getNeighbors(tile: TranscodedTile, allTiles: TranscodedTile[]) {
     const directions = [
@@ -189,14 +260,14 @@ export class Navigation extends Movement {
     const dx = to.x - from.x;
     const dy = to.y - from.y;
 
-    if (dx === 0 && dy === -1) return Direction.NORTH;
-    if (dx === 0 && dy === 1) return Direction.SOUTH;
-    if (dx === -1 && dy === 0) return Direction.WEST;
-    if (dx === 1 && dy === 0) return Direction.EAST;
-    if (dx === 1 && dy === -1) return Direction.NORTH_EAST;
-    if (dx === -1 && dy === -1) return Direction.NORTH_WEST;
-    if (dx === 1 && dy === 1) return Direction.SOUTH_EAST;
-    if (dx === -1 && dy === 1) return Direction.SOUTH_EAST;
+    if (dx === 0 && dy < 0) return Direction.NORTH;
+    if (dx > 0 && dy === 0) return Direction.EAST;
+    if (dx === 0 && dy > 0) return Direction.SOUTH;
+    if (dx < 0 && dy === 0) return Direction.WEST;
+    if (dx > 0 && dy < 0) return Direction.NORTH_EAST;
+    if (dx > 0 && dy > 0) return Direction.SOUTH_EAST;
+    if (dx < 0 && dy > 0) return Direction.SOUTH_WEST;
+    if (dx < 0 && dy < 0) return Direction.NORTH_WEST;
 
     return null;
   }
@@ -209,19 +280,30 @@ export class Navigation extends Movement {
     const xShift = Math.round(dir.x * camera);
     const yShift = Math.round(dir.y * camera);
 
-    const xMin = Math.min(Math.max(0, x + xShift - camera), goal.x);
-    const xMax = Math.max(
-      Math.min(this.map[0].length, x + xShift + camera),
-      goal.x
+    const xMin = Math.max(0, Math.min(x + xShift - camera, goal.x));
+    const xMax = Math.min(
+      this.map[0].length,
+      Math.max(x + xShift + camera, goal.x)
     );
 
-    const yMin = Math.min(Math.max(0, y + yShift - camera), goal.y);
-    const yMax = Math.max(
-      Math.min(this.map.length, y + yShift + camera),
-      goal.y
+    const yMin = Math.max(0, Math.min(y + yShift - camera, goal.y));
+    const yMax = Math.min(
+      this.map.length,
+      Math.max(y + yShift + camera, goal.y)
     );
 
-    return { xMin, xMax, yMin, yMax };
+    const adjustedXMin = Math.min(x, xMin);
+    const adjustedXMax = Math.max(x + 1, xMax);
+
+    const adjustedYMin = Math.min(y, yMin);
+    const adjustedYMax = Math.max(y + 1, yMax);
+
+    return {
+      xMin: adjustedXMin,
+      xMax: adjustedXMax,
+      yMin: adjustedYMin,
+      yMax: adjustedYMax,
+    };
   }
 
   private __storeLog(sessionId: string, direction: string) {
