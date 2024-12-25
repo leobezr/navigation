@@ -53,8 +53,8 @@ export class Map {
   private _generateTiles() {
     const [x, y] = this._configuration.generate;
 
-    this._tileMap = [...new Array(x)].map((_) => {
-      return [...new Array(y)].map((_) => {
+    this._tileMap = [...new Array(y)].map((_) => {
+      return [...new Array(x)].map((_) => {
         return this._configuration.defaultToGroundId;
       });
     });
