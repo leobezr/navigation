@@ -2,7 +2,8 @@ import { Tiles } from "../config/tiles/tiles";
 import { Movement } from "../movement/movement";
 import { Direction } from "../movement/type";
 import { AStar } from "../services/a-star";
-import { Position } from "../services/type";
+import { Dictionary, Position } from "../services/type";
+import { randomUUID } from "crypto";
 
 import {
   NavigationProps,
@@ -32,9 +33,9 @@ export class Navigation extends Movement {
     return this.__transcodeTiles(tiles, goal, camera.xMin, camera.yMin);
   }
 
-  public goTo(goal: Position): Direction[] {
+  public goTo(goal: Position) {
     const path = this.getPath(goal);
-    const directions: Direction[] = [];
+    const sessionId = randomUUID();
 
     for (let i = 0; i < path.length - 1; i++) {
       const from = path[i];
@@ -42,13 +43,12 @@ export class Navigation extends Movement {
       const direction = this.__getDirection(from, to);
 
       if (direction) {
-        directions.push(direction);
-        this.__log.push(direction);
+        this.__storeLog(sessionId, direction);
         this.move(direction);
       }
     }
 
-    return directions;
+    return sessionId;
   }
 
   public getPath(goal: Position) {
@@ -142,7 +142,7 @@ export class Navigation extends Movement {
     cameraSizeDimension: 10,
   };
 
-  private __log: Direction[] = [];
+  private __log: Dictionary<string> = {};
 
   private __getNeighbors(tile: TranscodedTile, allTiles: TranscodedTile[]) {
     const directions = [
@@ -222,6 +222,14 @@ export class Navigation extends Movement {
     );
 
     return { xMin, xMax, yMin, yMax };
+  }
+
+  private __storeLog(sessionId: string, direction: string) {
+    if (!this.__log[sessionId]) {
+      this.__log[sessionId] = direction;
+    } else {
+      this.__log[sessionId] += `, ${direction}`;
+    }
   }
 
   private __transcodeTiles(
