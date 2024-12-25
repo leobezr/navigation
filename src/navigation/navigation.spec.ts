@@ -63,15 +63,18 @@ describe("Testing navigation system", () => {
       );
     });
 
-    it("When goal is north-east, point to north-east", () => {
+    it("When goal is north-east, point to north-east and extends camera till goal", () => {
       navigation.changePosition({ x: 2, y: 9 });
 
       expect(navigation.camera({ x: 6, y: 2 })).toEqual(
         expect.arrayContaining([
-          [42, 43, 44, 45],
-          [50, 51, 52, 53],
-          [58, 59, 60, 61],
-          [66, 67, 68, 69],
+          [18, 19, 20, 21, 22],
+          [26, 27, 28, 29, 30],
+          [34, 35, 36, 37, 38],
+          [42, 43, 44, 45, 46],
+          [50, 51, 52, 53, 54],
+          [58, 59, 60, 61, 62],
+          [66, 67, 68, 69, 70],
         ])
       );
     });
@@ -87,25 +90,16 @@ describe("Testing navigation system", () => {
       cameraSizeDimension: 5,
     });
 
-    it("Should get the expected tiles", () => {
+    it("Scans tiles and skips non walkable ones", () => {
       const tiles = navigation.scanTiles({ x: 6, y: 2 });
-      const simpleTiles = tiles.map((y) => y.map((x) => x.fCost));
+      const simpleTiles = tiles.map((y) => y.map((x) => x.name));
 
       expect(simpleTiles).toEqual(
         expect.arrayContaining([
-          [6, 5, 4, 3],
-          [
-            6.414213562373095, 5.414213562373095, 4.414213562373095,
-            3.414213562373095,
-          ],
-          [
-            6.82842712474619, 6.242640687119285, 4.82842712474619,
-            3.8284271247461903,
-          ],
-          [
-            7.242640687119286, 6.242640687119286, 5.242640687119286,
-            4.82842712474619,
-          ],
+          ["grass", "grass"],
+          ["grass", "grass"],
+          ["grass"],
+          ["grass", "grass", "grass", "grass", "grass"],
         ])
       );
     });
@@ -121,18 +115,105 @@ describe("Testing navigation system", () => {
         generate: [40, 40],
         defaultToGroundId: TileType.GRASS,
       },
-      cameraSizeDimension: 5,
+      cameraSizeDimension: 8,
     });
 
-    it("Should get sorted path", () => {
-      console.log(navigation.getPath({ x: 15, y: 10 }));
+    it("Testing straight line", () => {
       expect(navigation.getPath({ x: 15, y: 10 })).toEqual(
         expect.arrayContaining([
+          { x: 10, y: 10 },
           { x: 11, y: 10 },
           { x: 12, y: 10 },
           { x: 13, y: 10 },
           { x: 14, y: 10 },
           { x: 15, y: 10 },
+        ])
+      );
+    });
+
+    it("Should get sorted path", () => {
+      expect(navigation.getPath({ x: 15, y: 10 })).toEqual(
+        expect.arrayContaining([
+          { x: 10, y: 10 },
+          { x: 11, y: 10 },
+          { x: 12, y: 10 },
+          { x: 13, y: 10 },
+          { x: 14, y: 10 },
+          { x: 15, y: 10 },
+        ])
+      );
+    });
+  });
+
+  describe("Testing movement", () => {
+    const navigation = new Navigation({
+      initialPosition: {
+        x: 0,
+        y: 0,
+      },
+      map: {
+        generate: [40, 40],
+        defaultToGroundId: TileType.GRASS,
+      },
+      cameraSizeDimension: 40,
+    });
+
+    it("Testing simple movement", () => {
+      navigation.goTo({ x: 15, y: 12 });
+
+      expect(navigation.position).toEqual(
+        expect.objectContaining({
+          x: 15,
+          y: 12,
+        })
+      );
+
+      expect(navigation.log).toEqual(
+        expect.arrayContaining([
+          "se",
+          "se",
+          "se",
+          "e",
+          "e",
+          "e",
+          "se",
+          "se",
+          "se",
+          "se",
+          "se",
+          "se",
+          "se",
+          "se",
+          "se",
+        ])
+      );
+    });
+
+    it("Testing straight line", () => {
+      navigation.changePosition({ x: 0, y: 20 });
+      navigation.goTo({ x: 10, y: 22 });
+
+      expect(navigation.position).toEqual(
+        expect.objectContaining({
+          x: 10,
+          y: 22,
+        })
+      );
+
+      expect(navigation.log).toEqual(
+        expect.arrayContaining([
+          "e",
+          "e",
+          "e",
+          "e",
+          "e",
+          "e",
+          "e",
+          "e",
+          "e",
+          "e",
+          "se",
+          "se",
         ])
       );
     });

@@ -15,4 +15,5 @@ export interface TranscodedTile extends Tile {
   hCost: number;
   fCost: number;
   position: Position;
+  parent: TranscodedTile | null;
 }
