@@ -1,5 +1,5 @@
 import { Navigation } from "./navigation";
-import { standardMap, numericMap, trafficMap } from "./__mocks__/maps";
+import { standardMap, numericMap, trafficMap, mazeMap } from "./__mocks__/maps";
 import { TileType } from "../config/tiles/type";
 import { Dictionary, Position } from "../services/type";
 import { Tiles } from "../config/tiles/tiles";
@@ -334,6 +334,27 @@ describe("Testing navigation system", () => {
       navigation.goTo({ x: 70, y: 19 });
 
       expect(navigation.position).toStrictEqual({ x: 70, y: 19 });
+    });
+  });
+
+  describe("Testing maze", () => {
+    const navigation = new Navigation({
+      initialPosition: {
+        x: 1,
+        y: 1,
+      },
+      map: mazeMap,
+      cameraSizeDimension: 15,
+      allowTraffic: false,
+    });
+
+    it("Goes from left to right", () => {
+      navigation.goTo({ x: 7, y: 7 });
+
+      expect(navigation.position).toStrictEqual({
+        x: 7,
+        y: 7,
+      });
     });
   });
 });

@@ -34,12 +34,12 @@ export class Navigation extends Movement {
     return this.__transcodeTiles(tiles, goal, camera.xMin, camera.yMin);
   }
 
-  public goTo(goal: Position) {
+  public goTo(goal: Position, log?: boolean) {
     const sessionId = randomUUID();
 
     while (this.position.x !== goal.x || this.position.y !== goal.y) {
       const path = this.getPath(goal);
-      this.__moveInPathDirection(path, sessionId);
+      this.__moveInPathDirection(path, sessionId, log);
     }
 
     return sessionId;
@@ -265,7 +265,11 @@ export class Navigation extends Movement {
     };
   }
 
-  private __moveInPathDirection(path: Position[], sessionId: string) {
+  private __moveInPathDirection(
+    path: Position[],
+    sessionId: string,
+    log?: boolean
+  ) {
     if (!path || path.length < 2) {
       throw Error(`Path not found or too short at position:`);
     }
@@ -279,6 +283,12 @@ export class Navigation extends Movement {
 
       this.__storeLog(sessionId, direction);
       this.move(direction);
+
+      if (log) {
+        console.log(
+          `Moving [${direction}]: (${oldPos.x},${oldPos.y}) -> (${this.position.x},${this.position.y})`
+        );
+      }
 
       if (this.__hasTraffic(sessionId, oldPos, this.position)) {
         throw Error("Couldn't move to expected position");
