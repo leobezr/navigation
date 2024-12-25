@@ -159,62 +159,33 @@ describe("Testing navigation system", () => {
     });
 
     it("Testing simple movement", () => {
-      navigation.goTo({ x: 15, y: 12 });
+      const sessionId = navigation.goTo({ x: 15, y: 12 });
 
-      expect(navigation.position).toEqual(
+      expect(navigation.position).toStrictEqual(
         expect.objectContaining({
           x: 15,
           y: 12,
         })
       );
 
-      expect(navigation.log).toEqual(
-        expect.arrayContaining([
-          "se",
-          "se",
-          "se",
-          "e",
-          "e",
-          "e",
-          "se",
-          "se",
-          "se",
-          "se",
-          "se",
-          "se",
-          "se",
-          "se",
-          "se",
-        ])
+      expect(navigation.log[sessionId]).toStrictEqual(
+        "se, se, se, e, e, e, se, se, se, se, se, se, se, se, se"
       );
     });
 
     it("Testing straight line", () => {
       navigation.changePosition({ x: 0, y: 20 });
-      navigation.goTo({ x: 10, y: 22 });
+      const sessionId = navigation.goTo({ x: 10, y: 22 });
 
-      expect(navigation.position).toEqual(
+      expect(navigation.position).toStrictEqual(
         expect.objectContaining({
           x: 10,
           y: 22,
         })
       );
 
-      expect(navigation.log).toEqual(
-        expect.arrayContaining([
-          "e",
-          "e",
-          "e",
-          "e",
-          "e",
-          "e",
-          "e",
-          "e",
-          "e",
-          "e",
-          "se",
-          "se",
-        ])
+      expect(navigation.log[sessionId]).toStrictEqual(
+        "e, e, se, se, e, e, e, e, e, e"
       );
     });
   });
