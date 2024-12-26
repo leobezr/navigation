@@ -5,6 +5,7 @@ import { AStar } from "../services/a-star";
 import { Dictionary, Position } from "../services/type";
 import { randomUUID } from "crypto";
 import { manhattanGeometry } from "../services/manhattan-geometry";
+import { Sketch } from "../services/sketch-map";
 
 import {
   NavigationProps,
@@ -15,6 +16,10 @@ import {
 export class Navigation extends Movement {
   public get log() {
     return this.__log;
+  }
+
+  public sketch() {
+    return this.__sketch.beautifulMap();
   }
 
   public camera(goal: Position) {
@@ -67,6 +72,9 @@ export class Navigation extends Movement {
     if (!goalTile) {
       throw Error("Couldn't find tile goal");
     }
+
+    this.__sketch.pinStart(startingTile.position);
+    this.__sketch.pinGoal(goalTile.position);
 
     const openList = [startingTile];
     const closedList: TranscodedTile[] = [];
@@ -127,6 +135,10 @@ export class Navigation extends Movement {
         ...this.__setup,
         ...configuration,
       });
+
+      this.__sketch = new Sketch({
+        map: this.map,
+      });
     }
   }
 
@@ -139,6 +151,7 @@ export class Navigation extends Movement {
 
   private __log: Dictionary<string> = {};
   private __trafficLog: Dictionary<number> = {};
+  private __sketch!: Sketch;
 
   private __hasTraffic(sessionId: string, oldPos: Position, pos: Position) {
     const trafficThreshold = 3;
@@ -283,6 +296,7 @@ export class Navigation extends Movement {
 
       this.__storeLog(sessionId, direction);
       this.move(direction);
+      this.__sketch.path(this.position);
 
       if (log) {
         console.log(

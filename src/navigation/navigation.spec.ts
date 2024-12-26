@@ -350,6 +350,7 @@ describe("Testing navigation system", () => {
 
     it("Goes from left to right", () => {
       navigation.goTo({ x: 7, y: 7 });
+      navigation.sketch();
 
       expect(navigation.position).toStrictEqual({
         x: 7,
