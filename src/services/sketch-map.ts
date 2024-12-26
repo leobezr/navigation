@@ -6,7 +6,7 @@ export class Sketch {
     return this.__map;
   }
 
-  public get beautifulMap() {
+  public beautifulMap() {
     const header = this.__generateHeader();
     const divider = this.__headerDivider(header);
     const columns = this.__generateColumns();
@@ -21,8 +21,10 @@ export class Sketch {
   }
 
   public pinStart(pos: Position) {
-    this.__replaceSymbol(pos, this.__setup.symbols.start);
-    this.__log.start = pos;
+    if (!this.__log.start) {
+      this.__replaceSymbol(pos, this.__setup.symbols.start);
+      this.__log.start = pos;
+    }
   }
 
   public pinGoal(pos: Position) {
@@ -31,7 +33,12 @@ export class Sketch {
   }
 
   public path(pos: Position) {
-    this.__replaceSymbol(pos, this.__setup.symbols.explored);
+    const { x, y } = pos;
+    const symbol = this.__map[y][x];
+
+    if (symbol !== this.__setup.symbols.goal) {
+      this.__replaceSymbol(pos, this.__setup.symbols.explored);
+    }
   }
 
   constructor(setup: SketchConfiguration) {
@@ -63,9 +70,13 @@ export class Sketch {
       return column.map((node) => {
         const { walkable, invalid } = this.__setup.symbols;
         const tile = Tiles[node];
-        const symbol = tile.isWalkable ? walkable : invalid;
 
-        return symbol;
+        if (tile) {
+          const symbol = tile.isWalkable ? walkable : invalid;
+          return symbol;
+        }
+
+        return "?";
       });
     });
   }

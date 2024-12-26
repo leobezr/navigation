@@ -51,9 +51,9 @@ describe("Testing Sketch", () => {
   });
 
   it("Beautiful map", () => {
-    expect(sketch.beautifulMap).toStrictEqual([
+    expect(sketch.beautifulMap()).toStrictEqual([
       "   0 1 2",
-      "   ------",
+      "   -----",
       "0 |S x G",
       "1 |~ ~ ~",
       "2 |. . .",
